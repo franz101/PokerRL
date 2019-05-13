@@ -67,23 +67,29 @@ class InteractiveGame:
         self._env.print_tutorial()
 
         # play forever until human player manually stops
+        # ______________________________________________ one episode _______________________________________________
+
+        self._env.reset()
+        if self._eval_agent is not None:
+            # The agent has his own copy of the env within its EvalAgent. The following lines sets the decks between
+            # self.env and the agent's env equal. However, the agent cannot see any private cards but his own in his
+            # observations, of course!
+            self._eval_agent.reset(deck_state_dict=self._env.cards_state_dict())
+
+        self._env.render(mode=render_mode)
+        print()
+        print("****************************")
+        print("*        GAME START        *")
+        print("****************************")
+        print()        
         while True:
             print()
             print("****************************")
-            print("*        GAME START        *")
+            print("*        NEXT ROUND        *")
             print("****************************")
             print()
 
-            # ______________________________________________ one episode _______________________________________________
 
-            self._env.reset()
-            if self._eval_agent is not None:
-                # The agent has his own copy of the env within its EvalAgent. The following lines sets the decks between
-                # self.env and the agent's env equal. However, the agent cannot see any private cards but his own in his
-                # observations, of course!
-                self._eval_agent.reset(deck_state_dict=self._env.cards_state_dict())
-
-            self._env.render(mode=render_mode)
             while True:
                 current_player_id = self._env.current_player.seat_id
 
