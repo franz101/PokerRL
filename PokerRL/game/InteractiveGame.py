@@ -130,3 +130,46 @@ class InteractiveGame:
             print("")
             print("Current Winnings per player:", self._winnings_per_seat)
             input("Press Enter to go to the next round.")
+
+    def continue_to_play(self, render_mode="TEXT", limit_numpy_digits=True):       
+        while True:
+            while True:
+                current_player_id = self._env.current_player.seat_id
+
+                if self._eval_agent is not None:
+                    assert np.array_equal(self._env.board, self._eval_agent._internal_env_wrapper.env.board)
+                    assert np.array_equal(np.array(self._env.side_pots),
+                                          np.array(self._eval_agent._internal_env_wrapper.env.side_pots))
+                    assert self._env.current_player.seat_id == \
+                           self._eval_agent._internal_env_wrapper.env.current_player.seat_id
+                    assert self._env.current_round == self._eval_agent._internal_env_wrapper.env.current_round
+
+                # Human acts
+                if current_player_id in self._seats_human_plays_list:
+                    action_tuple = self._env.human_api_ask_action()
+
+                    if self._eval_agent is not None:
+                        self._eval_agent.notify_of_processed_tuple_action(action_he_did=action_tuple,
+                                                                          p_id_acted=current_player_id)
+
+                # Agent acts
+                else:
+                    a_idx, frac = self._eval_agent.get_action_frac_tuple(step_env=True)
+                    if a_idx == 2:
+                        action_tuple = [2, self._env.get_fraction_of_pot_raise(fraction=frac,
+                                                                               player_that_bets=current_player_id)]
+                    else:
+                        action_tuple = [a_idx, -1]
+
+                obs, rews, done, info = self._env._step(processed_action=action_tuple)
+                self._env.render(mode=render_mode)
+
+                if done:
+                    break
+
+            for s in range(self._env.N_SEATS):
+                self._winnings_per_seat[s] += np.rint(rews[s] * self._env.REWARD_SCALAR)
+
+            print("")
+            print("Current Winnings per player:", self._winnings_per_seat)
+            input("Press Enter to go to the next round.")
